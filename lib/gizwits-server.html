@@ -1,0 +1,92 @@
+<script type="text/javascript">
+  (function() {
+    RED.nodes.registerType('GizwitsServer',{
+      category: 'config',
+      defaults: {
+        host: { value: 'localhost' },
+        port: { value: 5672, validate: RED.validators.number() },
+        keepalive: { value: 30, validate: RED.validators.number() },
+        iotype: { value: '4', required: true },
+        ioname: { value: '', required: true },
+        aepUrl: { type: 'text' },
+        aepToken: { type: 'text' },
+      },
+      credentials: {
+        user: { type: 'text' },
+        password: { type: 'password' }, // __PWRD__
+      },
+      label: function() {
+        return `Host: ${this.host}`;
+      },
+      exportable: false,
+      oneditsave: function() {
+        var serverFields = [
+          'host',
+          'port',
+          'keepalive',
+          'iotype',
+          'ioname',
+          'user',
+          'password',
+          'aepUrl',
+          'aepToken',
+        ];
+        let serverinfo = {};
+        serverFields.forEach((field) => {
+          var v = $("#node-config-input-"+field).val();
+          serverinfo[field] = v;
+        })
+        localStorage.setItem(`gizwitsServer-${this.id}`, JSON.stringify(serverinfo))
+      }
+    });
+})();
+</script>
+<script type="text/html" data-template-name="GizwitsServer">
+  <div class="form-row">
+    <p style="margin-top: 30px;">amqp-server</span></p>
+  </div>
+  <div class="form-row">
+    <label style="width: 130px" for="node-config-input-host"><i class="fa fa-globe"></i> Server</label>
+    <input class="input-append-left" type="text" id="node-config-input-host" placeholder="localhost" style="width: 40%">
+    <label for="node-config-input-port" style="margin-left: 10px; width: 35px;"> Port</label>
+    <input type="text" id="node-config-input-port" placeholder="AMQP port, defaults to 5672" style="width:45px">
+  </div>
+  </div>
+  <div class="form-row">
+    <label style="width: 130px" for="node-config-input-keepalive"><i class="fa fa-clock-o"></i> Keep alive time (s)</label>
+    <input type="text" id="node-config-input-keepalive" style="width:45px">
+  </div>
+  <div class="form-row">
+    <label style="width: 130px" for="node-config-input-iotype"><i class="fa fa-filter"></i> Read from</label>
+    <select id="node-config-input-iotype">
+      <option value="0">direct exchange</option>
+      <option value="1">fanout exchange</option>
+      <option value="2">headers exchange</option>
+      <option value="3">topic exchange</option>
+      <option value="4">queue</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label style="width: 130px" for="node-config-input-ioname"></label>
+    <input type="text" id="node-config-input-ioname" placeholder="AMQP exchange or queue name">
+  </div>
+  <div class="form-row">
+    <label style="width: 130px" for="node-config-input-user"><i class="fa fa-user"></i> User</label>
+    <input type="text" id="node-config-input-user" >
+  </div>
+  <div class="form-row">
+      <label style="width: 130px" for="node-config-input-password"><i class="fa fa-lock"></i> Password</label>
+      <input type="password" id="node-config-input-password" >
+  </div>
+  <div class="form-row">
+    <p style="margin-top: 30px;">aep-server</span></p>
+  </div>
+  <div class="form-row">
+    <label style="width: 130px" for="node-config-input-aepUrl"><i class="fa fa-globe"></i> Aep Url</label>
+    <input type="text" id="node-config-input-aepUrl" >
+  </div>
+  <div class="form-row">
+    <label style="width: 130px" for="node-config-input-aepToken"><i class="fa fa-user-secret"></i> Access Token</label>
+    <input type="text" id="node-config-input-aepToken" >
+  </div>
+</script>
