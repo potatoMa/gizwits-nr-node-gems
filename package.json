@@ -1,6 +1,6 @@
 {
   "name": "node-red-node-gizwits",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "",
   "main": "index.js",
   "node-red": {
@@ -8,7 +8,6 @@
       "device status change": "lib/device-status-change.js",
       "device status get": "lib/device-status-get.js",
       "device control": "lib/device-control.js",
-      "notification": "lib/notification.js",
       "gizwitsServer": "lib/gizwits-server.js"
     }
   },
