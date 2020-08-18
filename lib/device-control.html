@@ -1,12 +1,4 @@
 <script type="text/javascript">
-  var operators = [
-    {v:"eq",t:"=="},
-    {v:"neq",t:"!="},
-    {v:"lt",t:"<"},
-    {v:"lte",t:"<="},
-    {v:"gt",t:">"},
-    {v:"gte",t:">="},
-  ];
   RED.nodes.registerType('device control',{
     category: 'gizwits',
     color:"#C0DEED",
@@ -15,7 +7,6 @@
       product: {value: '', required:true},
       productKey: {value: ''},
       device: {value: ''},
-      condition: {value:'eq'},
       dataPoint: {value: ''},
       dataPointValue: {value: ''},
       dataPointValueType: {value: 'str'}
@@ -24,7 +15,7 @@
     outputs: 1,
     icon: "bridge.png",
     label: function() {
-      return '设备状态获取';
+      return '设备控制';
     },
     labelStyle: function () {
       return '';
@@ -109,7 +100,7 @@
             const deviceSel = $('#node-input-device');
             deviceSel.empty();
             data.data.records.forEach((item) => {
-              deviceSel.append($(`<option value="${item.mac}">${item.name || item.sno}</option>`));
+              deviceSel.append($(`<option value="${item.sno}">${item.name || item.sno}</option>`));
             });
             deviceSel.val(value);
           }
@@ -134,12 +125,6 @@
         });
       }
       console.log('oneditprepare', this.product, this.device)
-      // 渲染运算符
-      const conditionSel = $('#node-input-condition');
-      for (var d in operators) {
-        conditionSel.append($("<option></option>").val(operators[d].v).text(operators[d].t));
-        conditionSel.val(this.condition)
-      }
       // 结果值
       $("#node-input-dataPointValue").typedInput({
         type:"str",
@@ -195,9 +180,8 @@
     </select>
   </div>
   <div class="form-row">
-    <label for="node-input-condition"><i class="fa fa-tags"></i> 判断条件</label>
-    <select style="display: inline-block;width:120px" id="node-input-condition"></select>
-    <input type="text" id="node-input-dataPointValue">
+    <label for="node-input-dataPointValue"><i class="fa fa-tags"></i> 数据点值</label>
+    <input type="text" id="node-input-dataPointValue" style="display: inline-block; width:70%;">
     <input type="hidden" id="node-input-dataPointValueType">
   </div>
 </script>
