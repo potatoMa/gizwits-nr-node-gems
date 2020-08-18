@@ -1,6 +1,6 @@
 {
   "name": "node-red-node-gizwits",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "",
   "main": "index.js",
   "node-red": {
@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "amqplib": "^0.5.5",
-    "moment": "^2.27.0",
     "object-hash": "^2.0.3",
     "p-retry": "^4.2.0",
     "request": "^2.88.0"
