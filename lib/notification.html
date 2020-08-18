@@ -1,0 +1,57 @@
+<script type="text/javascript">
+  RED.nodes.registerType('notification',{
+    category: 'gizwits',
+    color:"#C0DEED",
+    defaults: {
+      server: {type: 'GizwitsServer',required:true},
+      notiType: {value: 'phone', required: true},
+      deviceName: {value: ''},
+      eventName: {value: ''},
+      phoneNum: {value: ''}
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: "bridge.png",
+    label: function() {
+      return '发送通知';
+    },
+    labelStyle: function () {
+      return '';
+    },
+    oneditresize: function() {
+      console.log('oneditresize')
+    },
+    oneditprepare: function() {
+      console.log('oneditprepare')
+    },
+    oneditsave: function() {
+      console.log('oneditsave')
+    },
+  });
+</script>
+
+<script type="text/html" data-template-name="notification">
+  <div class="form-row">
+    <label test="test" for="node-input-server"><i class="fa fa-user"></i> <span>机智云服务</span></label>
+    <input type="text" id="node-input-server">
+  </div>
+  <div class="form-row">
+    <label for="node-input-notiType"><i class="fa fa-search"></i> 通知类型</label>
+    <select id="node-input-notiType" style="display: inline-block; width:70%;">
+      <option value="phone">电话</option>
+      <option value="msg">短信</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-deviceName"><i class="fa fa-rocket"></i> 设备名称</label>
+    <input type="text" id="node-input-deviceName" >
+  </div>
+  <div class="form-row">
+    <label for="node-input-eventName"><i class="fa fa-tags"></i> 事件名称</label>
+    <input type="text" id="node-input-eventName" >
+  </div>
+  <div class="form-row">
+    <label for="node-input-phoneNum"><i class="fa fa-phone"></i> 输入号码</label>
+    <input type="text" id="node-input-phoneNum" >
+  </div>
+</script>
