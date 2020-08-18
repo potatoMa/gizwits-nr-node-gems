@@ -1,0 +1,202 @@
+<script type="text/javascript">
+  var operators = [
+    {v:"eq",t:"=="},
+    {v:"neq",t:"!="},
+    {v:"lt",t:"<"},
+    {v:"lte",t:"<="},
+    {v:"gt",t:">"},
+    {v:"gte",t:">="},
+  ];
+  RED.nodes.registerType('device status change',{
+      category: 'gizwits',
+      color:"#C0DEED",
+      defaults: {
+        server: {type: 'GizwitsServer',required:true},
+        product: {value: '', required:true},
+        productKey: {value: ''},
+        device: {value: ''},
+        condition: {value:'eq'},
+        dataPoint: {value: ''},
+        dataPointValue: {value: ''},
+        dataPointValueType: {value: 'str'}
+      },
+      inputs: 0,
+      outputs: 1,
+      icon: "inject.png",
+      label: function() {
+        return '设备状态变化';
+      },
+      labelStyle: function () {
+        return '';
+      },
+      oneditresize: function() {
+        console.log('oneditresize')
+      },
+      oneditprepare: function() {
+        // 封装请求方法
+        const request = ({ url, method, data }) => {
+          return new Promise(function(res, rej) {
+            const serverId = $('#node-input-server').val();
+            const gizwitsServer = JSON.parse(localStorage.getItem(`gizwitsServer-${serverId}`) || '{}');
+            if (gizwitsServer.aepUrl && gizwitsServer.aepToken) {
+              $.ajax({
+                url: `${gizwitsServer.aepUrl}${url}`,
+                contentType: "application/json;charset=utf-8",
+                type: method,
+                headers: {
+                  Authorization: gizwitsServer.aepToken,
+                },
+                crossDomain: true,
+                dataType: 'json',
+                data: JSON.stringify({
+                  appKey: 'string',
+                  data,
+                  version: '1.0'
+                }),
+                success: function (data) {
+                  res(data);
+                }
+              });
+            } else {
+              rej();
+            }
+          })
+        }
+        // 重置方法
+        const reset = () => {
+          $('#node-input-product').empty();
+          $('#node-input-device').empty();
+          $('#node-input-dataPoint').empty();
+        }
+        // 封装获取产品方法
+        const getProduct = (value) => {
+          request({
+            url: '/product/product/list',
+            method: 'post',
+            data: {
+              asc: false,
+              orderByField: 'utime',
+              current: 1,
+              size: 100
+            },
+          }).then((data) => {
+            if (data.data && data.data.records) {
+              // 渲染产品列表
+              const productSel = $('#node-input-product');
+              productSel.empty();
+              data.data.records.forEach((item) => {
+                productSel.append($('<option></option>').val(item.id).text(item.name || item.gizwitsProductKey).attr('pk', item.gizwitsProductKey));
+              });
+              productSel.val(value);
+            }
+          });
+        }
+        // 封装获取设备方法
+        const getDevice = (productId, value) => {
+          request({
+            url: '/device/device/list',
+            method: 'post',
+            data: {
+              current: 1,
+              query: {
+                productId,
+              },
+              size: 100,
+            },
+          }).then((data) => {
+            if (data.data && data.data.records) {
+              // 渲染设备列表
+              const deviceSel = $('#node-input-device');
+              deviceSel.empty();
+              data.data.records.forEach((item) => {
+                deviceSel.append($(`<option value="${item.mac}">${item.name || item.sno}</option>`));
+              });
+              deviceSel.val(value);
+            }
+          });
+        }
+        // 封装获取数据点方法
+        const getDataPoint = (productId, value) => {
+          request({
+            url: '/product/product/detail',
+            method: 'post',
+            data: productId,
+          }).then((data) => {
+            if (data.data && data.data.productDataPoints) {
+              // 渲染设备列表
+              const dataPointSel = $('#node-input-dataPoint');
+              dataPointSel.empty();
+              data.data.productDataPoints.forEach((item) => {
+                dataPointSel.append($(`<option value="${item.identityName}">${item.showName}</option>`));
+              });
+              dataPointSel.val(value);
+            }
+          });
+        }
+        // 渲染运算符
+        const conditionSel = $('#node-input-condition');
+        for (var d in operators) {
+          conditionSel.append($("<option></option>").val(operators[d].v).text(operators[d].t));
+          conditionSel.val(this.condition)
+        }
+        // 结果值
+        $("#node-input-dataPointValue").typedInput({
+          type:"str",
+          types:["str","num","bool"],
+          typeField: "#node-input-dataPointValueType"
+        });
+        // 监听服务变化，获取产品
+        $('#node-input-server').on('change', (e) => {
+          const serverId = e.target.value;
+          if (serverId !== '_ADD_') {
+            getProduct(this.product);
+          } else {
+            reset();
+          }
+        });
+        // 监听产品变化，获取设备及数据点
+        $('#node-input-product').on('change', (e) => {
+          let product = e.target.value || this.product;
+          getDevice(product, this.device);
+          getDataPoint(product, this.dataPoint);
+        });
+      },
+      oneditsave: function() {
+        // 找出对应产品id的pk
+        const productIdSel = this.product;
+        const pkItemSel = $('#node-input-product').children().filter(function(){ return $(this).val() === productIdSel})[0];
+        if (pkItemSel) {
+          this.productKey = $(pkItemSel).attr('pk');
+        }
+        console.log('oneditsave')
+      },
+  });
+</script>
+
+<script type="text/html" data-template-name="device status change">
+  <div class="form-row">
+    <label for="node-input-server"><i class="fa fa-user"></i> <span>机智云服务</span></label>
+    <input type="text" id="node-input-server">
+  </div>
+  <div class="form-row">
+    <label for="node-input-product"><i class="fa fa-search"></i> 选择产品</label>
+    <select id="node-input-product" style="display: inline-block; width:70%;">
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-device"><i class="fa fa-rocket"></i> 选择设备</label>
+    <select id="node-input-device" style="display: inline-block; width:70%;">
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-dataPoint"><i class="fa fa-tags"></i> 数据点</label>
+    <select id="node-input-dataPoint" style="display: inline-block; width:70%;">
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-condition"><i class="fa fa-tags"></i> 判断条件</label>
+    <select style="display: inline-block;width:120px" id="node-input-condition"></select>
+    <input type="text" id="node-input-dataPointValue">
+    <input type="hidden" id="node-input-dataPointValueType">
+  </div>
+</script>

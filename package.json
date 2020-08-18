@@ -5,7 +5,9 @@
   "main": "index.js",
   "node-red": {
     "nodes": {
-      "deviceStatus": "lib/device-status.js",
+      "device status change": "lib/device-status-change.js",
+      "device status get": "lib/device-status-get.js",
+      "device control": "lib/device-control.js",
       "gizwitsServer": "lib/gizwits-server.js"
     }
   },
