@@ -1,6 +1,6 @@
 {
   "name": "node-red-node-gizwits",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "",
   "main": "index.js",
   "node-red": {
@@ -8,6 +8,7 @@
       "device status change": "lib/device-status-change.js",
       "device status get": "lib/device-status-get.js",
       "device control": "lib/device-control.js",
+      "notification": "lib/notification.js",
       "gizwitsServer": "lib/gizwits-server.js"
     }
   },
@@ -16,6 +17,7 @@
   },
   "dependencies": {
     "amqplib": "^0.5.5",
+    "moment": "^2.27.0",
     "object-hash": "^2.0.3",
     "p-retry": "^4.2.0",
     "request": "^2.88.0"
