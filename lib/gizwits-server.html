@@ -8,6 +8,8 @@
         keepalive: { value: 30, validate: RED.validators.number() },
         aepUrl: { type: 'text' },
         aepToken: { type: 'text' },
+        phoneNoti: { type: 'text' },
+        msgNoti: { type: 'text' },
       },
       credentials: {
         user: { type: 'text' },
@@ -26,6 +28,8 @@
           'password',
           'aepUrl',
           'aepToken',
+          'phoneNoti',
+          'msgNoti'
         ];
         let serverinfo = {};
         serverFields.forEach((field) => {
@@ -64,11 +68,22 @@
     <p style="margin-top: 30px;">aep-server</span></p>
   </div>
   <div class="form-row">
-    <label style="width: 130px" for="node-config-input-aepUrl"><i class="fa fa-globe"></i> Aep Url</label>
+    <label style="width: 130px" for="node-config-input-aepUrl"><i class="fa fa-globe"></i> Aep Host</label>
     <input type="text" id="node-config-input-aepUrl" >
   </div>
   <div class="form-row">
     <label style="width: 130px" for="node-config-input-aepToken"><i class="fa fa-user-secret"></i> Access Token</label>
     <input type="text" id="node-config-input-aepToken" >
+  </div>
+  <div class="form-row">
+    <p style="margin-top: 30px;">notification-server</span></p>
+  </div>
+  <div class="form-row">
+    <label style="width: 130px" for="node-config-input-phoneNoti"><i class="fa fa-phone"></i> Phone Noti</label>
+    <input type="text" id="node-config-input-phoneNoti" >
+  </div>
+  <div class="form-row">
+    <label style="width: 130px" for="node-config-input-msgNoti"><i class="fa fa-envelope-o"></i> Message Noti</label>
+    <input type="text" id="node-config-input-msgNoti" >
   </div>
 </script>
