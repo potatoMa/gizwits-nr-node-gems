@@ -1,15 +1,15 @@
 <script type="text/javascript">
-  RED.nodes.registerType('device control',{
-    category: 'gizwits',
+  RED.nodes.registerType('设备控制',{
+    category: '机智云',
     color:"#C0DEED",
     defaults: {
       server: {type: 'GizwitsServer',required:true},
       product: {value: '', required:true},
       productKey: {value: ''},
       device: {value: ''},
-      dataPoint: {value: ''},
-      dataPointValue: {value: ''},
-      dataPointValueType: {value: 'str'}
+      dataPoints: {value: ''},
+      productList: {value: ''},
+      deviceList: {value: ''},
     },
     inputs: 1,
     outputs: 1,
@@ -24,6 +24,8 @@
       console.log('oneditresize')
     },
     oneditprepare: function() {
+      this.dataPoints = this.dataPoints || [{}]
+      var _this = this;
       // 封装请求方法
       const request = ({ url, method, data }) => {
         return new Promise(function(res, rej) {
@@ -80,6 +82,8 @@
               productSel.append($('<option></option>').val(item.id).text(item.name || item.gizwitsProductKey).attr('pk', item.gizwitsProductKey));
             });
             productSel.val(value);
+            // 缓存起来
+            this.productList = data.data.records;
           }
         });
       }
@@ -104,24 +108,31 @@
               deviceSel.append($(`<option value="${item.sno}">${item.name || item.sno}</option>`));
             });
             deviceSel.val(value);
+            // 缓存起来
+            this.deviceList = data.data.records;
           }
         });
       }
       // 封装获取数据点方法
-      const getDataPoint = (productId, value) => {
+      const getDataPoint = (productId) => {
         request({
           url: '/product/product/detail',
           method: 'post',
           data: productId,
         }).then((data) => {
           if (data.data && data.data.productDataPoints) {
-            // 渲染设备列表
-            const dataPointSel = $('#node-input-dataPoint');
-            dataPointSel.empty();
-            data.data.productDataPoints.forEach((item) => {
-              dataPointSel.append($(`<option value="${item.identityName}">${item.showName}</option>`));
-            });
-            dataPointSel.val(value);
+            const dps = _this.productDataPoints = data.data.productDataPoints;
+            // 渲染数据点列表
+            const dataPointSels = $('.dataPoint');
+            let index = 0;
+            for (var dataPointSel of dataPointSels) {
+              $(dataPointSel).empty();
+              dps.forEach((item) => {
+                $(dataPointSel).append($(`<option value="${item.identityName}">${item.showName}</option>`));
+                $(dataPointSel).val((_this.dataPoints[index] && _this.dataPoints[index].dataPoint) || dps[0].identityName);
+              });
+              index += 1;
+            }
           }
         });
       }
@@ -145,8 +156,49 @@
       $('#node-input-product').on('change', (e) => {
         let product = e.target.value || this.product;
         getDevice(product, this.device);
-        getDataPoint(product, this.dataPoint);
+        getDataPoint(product);
       });
+
+      // 渲染数据点配置
+      $("ol.dpList").editableList({
+        addButton: "添加",
+        addItem: function(row, index, data) {
+          $(row).html(`
+            <select id="node-input-dataPoint${index}" class="dataPoint" style="display: inline-block;width: 120px"></select>
+            <input type="text" id="node-input-dataPointValue${index}" class="dataPointValue" style="display: inline-block; width:50%;">
+            <input type="hidden" id="node-input-dataPointValueType${index}" class="dataPointValueType">
+          `);
+          // 渲染数据点
+          var dps = (_this.productDataPoints || []);
+          dps.forEach((item) => {
+            $(`#node-input-dataPoint${index}`).append($(`<option value="${item.identityName}">${item.showName}</option>`));
+          });
+          // 如果有传入data，则导入
+          $(`#node-input-dataPoint${index}`).val(data.dataPoint || (dps[0] && dps[0].identityName));
+          $(`#node-input-dataPointValue${index}`).val(data.dataPointValue);
+          $(`#node-input-dataPointValueType${index}`).val(data.dataPointValueType);
+          // 渲染数据点类型
+          $(`#node-input-dataPointValue${index}`).typedInput({
+            type:"str",
+            types:["str","num","bool"],
+            typeField: `#node-input-dataPointValueType${index}`
+          });
+        },
+        removable: true,
+      });
+      this.dataPoints.forEach((item) => {
+        $("ol.dpList").editableList('addItem', item);
+      });
+
+      // 第一次进入时，加载缓存的列表
+      (this.productList || []).forEach((item) => {
+        $('#node-input-product').append($('<option></option>').val(item.id).text(item.name || item.gizwitsProductKey).attr('pk', item.gizwitsProductKey));
+      });
+      $('#node-input-product').val(this.product)
+      (this.deviceList || []).forEach((item) => {
+        $('#node-input-device').append($(`<option value="${item.mac}">${item.name || item.sno}</option>`));
+      });
+      $('#node-input-device').val(this.device)
     },
     oneditsave: function() {
       // 找出对应产品id的pk
@@ -156,11 +208,20 @@
         this.productKey = $(pkItemSel).attr('pk');
       }
       console.log('oneditsave')
+      var dpItems = $("ol.dpList").editableList('items');
+      this.dataPoints = [];
+      for (var item of dpItems) {
+        this.dataPoints.push({
+          dataPoint: item.children('.dataPoint').val(),
+          dataPointValue: item.children('.dataPointValue').val(),
+          dataPointValueType: item.children('.dataPointValueType').val(),
+        })
+      }
     },
   });
 </script>
 
-<script type="text/html" data-template-name="device control">
+<script type="text/html" data-template-name="设备控制">
   <div class="form-row">
     <label test="test" for="node-input-server"><i class="fa fa-user"></i> <span>机智云服务</span></label>
     <input type="text" id="node-input-server">
@@ -176,13 +237,7 @@
     </select>
   </div>
   <div class="form-row">
-    <label for="node-input-dataPoint"><i class="fa fa-tags"></i> 数据点</label>
-    <select id="node-input-dataPoint" style="display: inline-block; width:70%;">
-    </select>
-  </div>
-  <div class="form-row">
-    <label for="node-input-dataPointValue"><i class="fa fa-tags"></i> 数据点值</label>
-    <input type="text" id="node-input-dataPointValue" style="display: inline-block; width:70%;">
-    <input type="hidden" id="node-input-dataPointValueType">
+    <label for="node-input-dataPointValue"><i class="fa fa-tags"></i> 数据点</label>
+    <ol class="dpList"></ol>
   </div>
 </script>

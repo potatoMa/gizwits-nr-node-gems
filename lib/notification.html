@@ -1,13 +1,14 @@
 <script type="text/javascript">
-  RED.nodes.registerType('notification',{
-    category: 'gizwits',
+  RED.nodes.registerType('发送通知',{
+    category: '机智云',
     color:"#C0DEED",
     defaults: {
       server: {type: 'GizwitsServer',required:true},
       notiType: {value: 'phone', required: true},
       deviceName: {value: ''},
       eventName: {value: ''},
-      phoneNum: {value: ''}
+      phoneNum: {value: ''},
+      listArgs: {value: ''}
     },
     inputs: 1,
     outputs: 1,
@@ -22,15 +23,137 @@
       console.log('oneditresize')
     },
     oneditprepare: function() {
+      this.listArgs = this.listArgs || [];
       console.log('oneditprepare')
+      var _this = this;
+      // 封装请求方法
+      const request = ({ url, method, data }) => {
+        return new Promise(function(res, rej) {
+          const serverId = $('#node-input-server').val();
+          const gizwitsServer = JSON.parse(localStorage.getItem(`gizwitsServer-${serverId}`) || '{}');
+          if (gizwitsServer.aepUrl && gizwitsServer.aepToken) {
+            $.ajax({
+              url: `${gizwitsServer.aepUrl}${url}`,
+              contentType: "application/json;charset=utf-8",
+              type: method,
+              headers: {
+                Authorization: gizwitsServer.aepToken,
+              },
+              crossDomain: true,
+              dataType: 'json',
+              data: JSON.stringify({
+                appKey: 'string',
+                data,
+                version: '1.0'
+              }),
+              success: function (data) {
+                res(data);
+              }
+            });
+          } else {
+            rej();
+          }
+        })
+      }
+      // 监听通知类型切换，渲染对应的模版
+      $('#node-input-notiType').on('change', async (e) => {
+        const notiType = e.target.value;
+        if (notiType === 'phone') {
+          // 先获取用户id
+          var accountRes = await request({
+            url: '/sys/sysUser/userDetailInfo',
+            method: 'post',
+            data: {},
+          })
+          if (!accountRes.data) {
+            console.log('获取用户id失败')
+            return;
+          }
+          var sysAccountId = accountRes.data.id;
+          // 再通过用户id获取企业id
+          var userDetailRes = await request({
+            url: '/enterprises/detailBySysAccountId',
+            method: 'post',
+            data: sysAccountId
+          });
+          if (!userDetailRes.data) {
+            console.log('获取企业id失败')
+            return;
+          }
+          var enterpriseId = userDetailRes.data.enterpriseId;
+          // 再通过企业id获取企业事件id
+          var enterEventRes = await request({
+            url: '/enterprises/voiceCalling/enterpriseEvent/manageQueryPage',
+            method: 'post',
+            data: {
+              size: 100,
+              query: {
+                enterpriseId,
+              },
+              current: 1
+            }
+          });
+          if (!enterEventRes.data) {
+            console.log('获取企业事件id失败')
+            return;
+          }
+          // 过滤出国内的业务事件
+          var event = enterEventRes.data.records.find(item => item.eventTypeCategory === 'business' && item.platformList[0].district === 1)
+          console.log('筛选出国内业务事件', event)
+          var enterDetailRes = await request({
+            url: '/enterprises/voiceCalling/enterpriseEvent/manageDetail',
+            method: 'post',
+            data: {
+              enterpriseEventId: event.id,
+            }
+          });
+          if (!enterDetailRes.data) {
+            console.log('获取企业事件模版失败')
+            return;
+          }
+          const { content, listArgs } = enterDetailRes.data.platformList[0].voiceList[0].voiceContent.listArgsTemplate;
+          _this.content = content;
+          $('#tips').html(content);
+          $('#params-box').empty();
+          // 渲染参数输入框
+          listArgs.forEach((item) => {
+            if (item !== 'TIME') {
+              $('#params-box').append($(`
+                <div class="form-row">
+                  <label for="node-input-${item}"><i class="fa fa-tags"></i> ${item}</label>
+                  <input type="text" id="node-input-${item}" value="${_this[item] || ''}" >
+                </div>
+              `));
+            }
+            _this._def.defaults[item] = {value: ''};
+          });
+          _this.listArgs = listArgs;
+        } else {
+          _this.content = '【机智云】app提醒您，${设备名称}的${事件名称}在${time}被执行。';
+          $('#tips').html(_this.content);
+          $('#params-box').html(`
+            <div class="form-row">
+              <label for="node-input-deviceName"><i class="fa fa-rocket"></i> 设备名称</label>
+              <input type="text" id="node-input-deviceName" value="${_this.deviceName}">
+            </div>
+            <div class="form-row">
+              <label for="node-input-eventName"><i class="fa fa-tags"></i> 事件名称</label>
+              <input type="text" id="node-input-eventName" value="${_this.eventName}">
+            </div>
+          `)
+        }
+      });
     },
     oneditsave: function() {
-      console.log('oneditsave')
+      this.listArgs.forEach((item) => {
+        this[item] = $(`#node-input-${item}`).val();
+      })
+      console.log('oneditsave', this._def)
     },
   });
 </script>
 
-<script type="text/html" data-template-name="notification">
+<script type="text/html" data-template-name="发送通知">
   <div class="form-row">
     <label test="test" for="node-input-server"><i class="fa fa-user"></i> <span>机智云服务</span></label>
     <input type="text" id="node-input-server">
@@ -42,16 +165,19 @@
       <option value="msg">短信</option>
     </select>
   </div>
-  <div class="form-row">
-    <label for="node-input-deviceName"><i class="fa fa-rocket"></i> 设备名称</label>
-    <input type="text" id="node-input-deviceName" >
-  </div>
-  <div class="form-row">
-    <label for="node-input-eventName"><i class="fa fa-tags"></i> 事件名称</label>
-    <input type="text" id="node-input-eventName" >
+  <div id="params-box">
+    <div class="form-row">
+      <label for="node-input-deviceName"><i class="fa fa-rocket"></i> 设备名称</label>
+      <input type="text" id="node-input-deviceName" >
+    </div>
+    <div class="form-row">
+      <label for="node-input-eventName"><i class="fa fa-tags"></i> 事件名称</label>
+      <input type="text" id="node-input-eventName" >
+    </div>
   </div>
   <div class="form-row">
     <label for="node-input-phoneNum"><i class="fa fa-phone"></i> 输入号码</label>
     <input type="text" id="node-input-phoneNum" >
   </div>
+  <div class="form-tips"><span id="tips"></span></div>
 </script>

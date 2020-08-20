@@ -7,8 +7,8 @@
     {v:"gt",t:">"},
     {v:"gte",t:">="},
   ];
-  RED.nodes.registerType('device status get',{
-    category: 'gizwits',
+  RED.nodes.registerType('设备状态获取',{
+    category: '机智云',
     color:"#C0DEED",
     defaults: {
       server: {type: 'GizwitsServer',required:true},
@@ -18,7 +18,10 @@
       condition: {value:'eq'},
       dataPoint: {value: ''},
       dataPointValue: {value: ''},
-      dataPointValueType: {value: 'str'}
+      dataPointValueType: {value: 'str'},
+      productList: {value: ''},
+      deviceList: {value: ''},
+      dataPointList: {value: ''},
     },
     inputs: 1,
     outputs: 1,
@@ -88,6 +91,8 @@
               productSel.append($('<option></option>').val(item.id).text(item.name || item.gizwitsProductKey).attr('pk', item.gizwitsProductKey));
             });
             productSel.val(value);
+            // 缓存起来
+            this.productList = data.data.records;
           }
         });
       }
@@ -112,6 +117,8 @@
               deviceSel.append($(`<option value="${item.mac}">${item.name || item.sno}</option>`));
             });
             deviceSel.val(value);
+            // 缓存起来
+            this.deviceList = data.data.records;
           }
         });
       }
@@ -130,6 +137,8 @@
               dataPointSel.append($(`<option value="${item.identityName}">${item.showName}</option>`));
             });
             dataPointSel.val(value);
+            // 缓存起来
+            this.dataPointList = data.data.records;
           }
         });
       }
@@ -161,6 +170,19 @@
         getDevice(product, this.device);
         getDataPoint(product, this.dataPoint);
       });
+      // 第一次进入时，加载缓存的列表
+      (this.productList || []).forEach((item) => {
+        $('#node-input-product').append($('<option></option>').val(item.id).text(item.name || item.gizwitsProductKey).attr('pk', item.gizwitsProductKey));
+      });
+      $('#node-input-product').val(this.product)
+      (this.deviceList || []).forEach((item) => {
+        $('#node-input-device').append($(`<option value="${item.mac}">${item.name || item.sno}</option>`));
+      });
+      $('#node-input-device').val(this.device)
+      (this.dataPointList || []).forEach((item) => {
+        $('#node-input-dataPoint').append($(`<option value="${item.identityName}">${item.showName}</option>`));
+      });
+      $('#node-input-dataPoint').val(this.dataPoint)
     },
     oneditsave: function() {
       // 找出对应产品id的pk
@@ -174,7 +196,7 @@
   });
 </script>
 
-<script type="text/html" data-template-name="device status get">
+<script type="text/html" data-template-name="设备状态获取">
   <div class="form-row">
     <label for="node-input-server"><i class="fa fa-user"></i> <span>机智云服务</span></label>
     <input type="text" id="node-input-server">
