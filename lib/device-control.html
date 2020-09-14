@@ -41,12 +41,7 @@
               },
               crossDomain: true,
               dataType: 'json',
-              data: JSON.stringify({
-                appKey: 'string',
-                data,
-                type: 'appId',
-                version: '1.0'
-              }),
+              data,
               success: function (data) {
                 res(data);
               }
@@ -65,71 +60,65 @@
       // 封装获取产品方法
       const getProduct = (value) => {
         request({
-          url: '/product/product/list',
-          method: 'post',
-          data: {
-            asc: false,
-            orderByField: 'utime',
-            current: 1,
-            size: 100
-          },
+          url: '/v1/products',
+          method: 'get',
         }).then((data) => {
-          if (data.data && data.data.records) {
+          if (data.data) {
             // 渲染产品列表
             const productSel = $('#node-input-product');
             productSel.empty();
-            data.data.records.forEach((item) => {
-              productSel.append($('<option></option>').val(item.id).text(item.name || item.gizwitsProductKey).attr('pk', item.gizwitsProductKey));
+            data.data.forEach((item) => {
+              productSel.append($('<option></option>').val(item.key).text(item.name || item.key).attr('pk', item.key));
             });
             productSel.val(value);
             // 缓存起来
-            this.productList = data.data.records;
+            this.productList = data.data;
           }
         });
       }
       // 封装获取设备方法
       const getDevice = (productId, value) => {
         request({
-          url: '/device/device/list',
-          method: 'post',
+          url: '/v1/devices',
+          method: 'get',
           data: {
-            current: 1,
-            query: {
-              productId,
-            },
+            current: 0,
+            productKey: productId,
             size: 100,
           },
         }).then((data) => {
-          if (data.data && data.data.records) {
+          const deviceSel = $('#node-input-device');
+          if (data.data && data.data.content) {
             // 渲染设备列表
-            const deviceSel = $('#node-input-device');
             deviceSel.empty();
-            data.data.records.forEach((item) => {
-              deviceSel.append($(`<option value="${item.sno}">${item.name || item.sno}</option>`));
+            data.data.content.forEach((item) => {
+              deviceSel.append($(`<option value="${item.id}">${item.name || item.id}</option>`));
             });
             deviceSel.val(value);
             // 缓存起来
-            this.deviceList = data.data.records;
+            this.deviceList = data.data.content;
+          } else {
+            deviceSel.empty();
+            deviceSel.val('');
           }
         });
       }
       // 封装获取数据点方法
       const getDataPoint = (productId) => {
         request({
-          url: '/product/product/detail',
-          method: 'post',
-          data: productId,
+          url: `/v1/products/${productId}/datapoints`,
+          method: 'get',
         }).then((data) => {
-          if (data.data && data.data.productDataPoints) {
-            const dps = _this.productDataPoints = data.data.productDataPoints;
+          if (data.data && data.data.meta) {
+            const dps = _this.productDataPoints = data.data.meta;
             // 渲染数据点列表
             const dataPointSels = $('.dataPoint');
             let index = 0;
             for (var dataPointSel of dataPointSels) {
               $(dataPointSel).empty();
               dps.forEach((item) => {
-                $(dataPointSel).append($(`<option value="${item.identityName}">${item.showName}</option>`));
-                $(dataPointSel).val((_this.dataPoints[index] && _this.dataPoints[index].dataPoint) || dps[0].identityName);
+                $(dataPointSel).append($(`<option value="${item.name}">${item.display_name}</option>`));
+                $(dataPointSel).val((_this.dataPoints[index] && _this.dataPoints[index].dataPoint) || dps[0].name);
               });
               index += 1;
             }
@@ -171,10 +160,10 @@
           // 渲染数据点
           var dps = (_this.productDataPoints || []);
           dps.forEach((item) => {
-            $(`#node-input-dataPoint${index}`).append($(`<option value="${item.identityName}">${item.showName}</option>`));
+            $(`#node-input-dataPoint${index}`).append($(`<option value="${item.name}">${item.display_name}</option>`));
           });
           // 如果有传入data，则导入
-          $(`#node-input-dataPoint${index}`).val(data.dataPoint || (dps[0] && dps[0].identityName));
+          $(`#node-input-dataPoint${index}`).val(data.dataPoint || (dps[0] && dps[0].name));
           $(`#node-input-dataPointValue${index}`).val(data.dataPointValue);
           $(`#node-input-dataPointValueType${index}`).val(data.dataPointValueType);
           // 渲染数据点类型
@@ -192,11 +181,11 @@
 
       // 第一次进入时，加载缓存的列表
       (this.productList || []).forEach((item) => {
-        $('#node-input-product').append($('<option></option>').val(item.id).text(item.name || item.gizwitsProductKey).attr('pk', item.gizwitsProductKey));
+        $('#node-input-product').append($('<option></option>').val(item.key).text(item.name || item.key).attr('pk', item.key));
       });
       $('#node-input-product').val(this.product)
       (this.deviceList || []).forEach((item) => {
-        $('#node-input-device').append($(`<option value="${item.mac}">${item.name || item.sno}</option>`));
+        $('#node-input-device').append($(`<option value="${item.id}">${item.name || item.id}</option>`));
       });
       $('#node-input-device').val(this.device)
     },
