@@ -147,6 +147,8 @@
           const serverId = e.target.value;
           if (serverId !== '_ADD_') {
             getProduct(this.product);
+            getDevice(this.product, this.device);
+            getDataPoint(this.product, this.dataPoint);
           } else {
             reset();
           }
