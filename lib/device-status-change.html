@@ -175,6 +175,13 @@
         });
         $('#node-input-dataPoint').val(this.dataPoint)
       },
+      oneditdelete: function() {
+        // 删除原来的队列
+        request({
+          url: `/v1/application/mq?queueName=${`gems.application.${this.originalPk}.nodered_` + this.id}`,
+          method: 'delete',
+        })
+      },
       oneditsave: function() {
         // 找出对应产品id的pk
         const productIdSel = this.product;
