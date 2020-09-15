@@ -59,63 +59,11 @@
       $('#node-input-notiType').on('change', async (e) => {
         const notiType = e.target.value;
         if (notiType === 'phone') {
-          // 先获取用户id
-          var accountRes = await request({
-            url: '/sys/sysUser/userDetailInfo',
-            method: 'post',
-            data: {},
-          })
-          if (!accountRes.data) {
-            console.log('获取用户id失败')
-            return;
-          }
-          var sysAccountId = accountRes.data.id;
-          // 再通过用户id获取企业id
-          var userDetailRes = await request({
-            url: '/enterprises/detailBySysAccountId',
-            method: 'post',
-            data: sysAccountId
-          });
-          if (!userDetailRes.data) {
-            console.log('获取企业id失败')
-            return;
-          }
-          var enterpriseId = userDetailRes.data.enterpriseId;
-          // 再通过企业id获取企业事件id
-          var enterEventRes = await request({
-            url: '/enterprises/voiceCalling/enterpriseEvent/manageQueryPage',
-            method: 'post',
-            data: {
-              size: 100,
-              query: {
-                enterpriseId,
-              },
-              current: 1
-            }
-          });
-          if (!enterEventRes.data) {
-            console.log('获取企业事件id失败')
-            return;
-          }
-          // 过滤出国内的业务事件
-          var event = enterEventRes.data.records.find(item => item.eventTypeCategory === 'business' && item.platformList[0].district === 1)
-          console.log('筛选出国内业务事件', event)
-          var enterDetailRes = await request({
-            url: '/enterprises/voiceCalling/enterpriseEvent/manageDetail',
-            method: 'post',
-            data: {
-              enterpriseEventId: event.id,
-            }
-          });
-          if (!enterDetailRes.data) {
-            console.log('获取企业事件模版失败')
-            return;
-          }
-          const { content, listArgs } = enterDetailRes.data.platformList[0].voiceList[0].voiceContent.listArgsTemplate;
-          _this.content = content;
-          $('#tips').html(content);
+          _this.content = '您的${TXT_20}在${TIME}发生了${TXT_32}报警，请及时处理';
+          $('#tips').html(_this.content);
           $('#params-box').empty();
           // 渲染参数输入框
+          const listArgs = ["TXT_20", "TIME", "TXT_32"]
           listArgs.forEach((item) => {
             if (item !== 'TIME') {
               $('#params-box').append($(`
