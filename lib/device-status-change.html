@@ -7,6 +7,31 @@
     {v:"gt",t:">"},
     {v:"gte",t:">="},
   ];
+  // 封装请求方法
+  const request = ({ url, method, data }) => {
+    return new Promise(function(res, rej) {
+      const serverId = $('#node-input-server').val();
+      const gizwitsServer = JSON.parse(localStorage.getItem(`gizwitsServer-${serverId}`) || '{}');
+      if (gizwitsServer.aepUrl && gizwitsServer.aepToken) {
+        $.ajax({
+          url: `${gizwitsServer.aepUrl}${url}`,
+          contentType: "application/json;charset=utf-8",
+          type: method,
+          headers: {
+            Authorization: gizwitsServer.aepToken,
+          },
+          crossDomain: true,
+          dataType: 'json',
+          data,
+          success: function (data) {
+            res(data);
+          }
+        });
+      } else {
+        rej();
+      }
+    })
+  }
   RED.nodes.registerType('设备状态变化',{
       category: '机智云',
       color:"#C0DEED",
@@ -36,32 +61,8 @@
         console.log('oneditresize')
       },
       oneditprepare: function() {
-        // 封装请求方法
-        const request = ({ url, method, data }) => {
-          return new Promise(function(res, rej) {
-            const serverId = $('#node-input-server').val();
-            const gizwitsServer = JSON.parse(localStorage.getItem(`gizwitsServer-${serverId}`) || '{}');
-            if (gizwitsServer.aepUrl && gizwitsServer.aepToken) {
-              $.ajax({
-                url: `${gizwitsServer.aepUrl}${url}`,
-                contentType: "application/json;charset=utf-8",
-                type: method,
-                headers: {
-                  Authorization: gizwitsServer.aepToken,
-                },
-                crossDomain: true,
-                dataType: 'json',
-                data,
-                success: function (data) {
-                  res(data);
-                }
-              });
-            } else {
-              rej();
-            }
-          })
-        }
-
+        this.originalPk = this.product;
+        console.log(this.originalPk, 'originalPk')
         // 重置方法
         const reset = () => {
           $('#node-input-product').empty();
@@ -156,6 +157,7 @@
         // 监听产品变化，获取设备及数据点
         $('#node-input-product').on('change', (e) => {
           let product = e.target.value || this.product;
+          this.product = product;
           getDevice(product, this.device);
           getDataPoint(product, this.dataPoint);
         });
@@ -180,6 +182,21 @@
         if (pkItemSel) {
           this.productKey = $(pkItemSel).attr('pk');
         }
+        // 删除原来的队列
+        request({
+          url: `/v1/application/mq?queueName=${`gems.application.${this.originalPk}.nodered_` + this.id}`,
+          method: 'delete',
+        }).then(() => {
+          // 创建队列
+          request({
+            url: '/v1/application/mq',
+            method: 'post',
+            data: JSON.stringify({
+              productKey: productIdSel,
+              queueName: `gems.application.${productIdSel}.nodered_` + this.id
+            })
+          });
+        });
         console.log('oneditsave')
       },
   });
