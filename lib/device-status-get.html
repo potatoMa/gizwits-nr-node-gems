@@ -43,7 +43,7 @@
             contentType: "application/json;charset=utf-8",
             type: method,
             headers: {
-              Authorization: 'ur5xTbc32EWF5Am0FM5qm41CPi6I5qVU',
+              Authorization: localStorage.getItem('access_token'),
             },
             crossDomain: true,
             dataType: 'json',
