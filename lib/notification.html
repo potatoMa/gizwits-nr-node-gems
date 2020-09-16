@@ -3,7 +3,6 @@
     category: '机智云',
     color:"#C0DEED",
     defaults: {
-      server: {type: 'GizwitsServer',required:true},
       notiType: {value: 'phone', required: true},
       deviceName: {value: ''},
       eventName: {value: ''},
@@ -28,35 +27,6 @@
       this.listArgs = this.listArgs || [];
       console.log('oneditprepare')
       var _this = this;
-      // 封装请求方法
-      const request = ({ url, method, data }) => {
-        return new Promise(function(res, rej) {
-          const serverId = $('#node-input-server').val();
-          const gizwitsServer = JSON.parse(localStorage.getItem(`gizwitsServer-${serverId}`) || '{}');
-          if (gizwitsServer.aepUrl && gizwitsServer.aepToken) {
-            $.ajax({
-              url: `${gizwitsServer.aepUrl}${url}`,
-              contentType: "application/json;charset=utf-8",
-              type: method,
-              headers: {
-                Authorization: gizwitsServer.aepToken,
-              },
-              crossDomain: true,
-              dataType: 'json',
-              data: JSON.stringify({
-                appKey: 'string',
-                data,
-                version: '1.0'
-              }),
-              success: function (data) {
-                res(data);
-              }
-            });
-          } else {
-            rej();
-          }
-        })
-      }
       // 监听通知类型切换，渲染对应的模版
       $('#node-input-notiType').on('change', async (e) => {
         const notiType = e.target.value;
@@ -104,10 +74,6 @@
 </script>
 
 <script type="text/html" data-template-name="发送通知">
-  <div class="form-row">
-    <label test="test" for="node-input-server"><i class="fa fa-user"></i> <span>机智云服务</span></label>
-    <input type="text" id="node-input-server">
-  </div>
   <div class="form-row">
     <label for="node-input-notiType"><i class="fa fa-search"></i> 通知类型</label>
     <select id="node-input-notiType" style="display: inline-block; width:70%;">

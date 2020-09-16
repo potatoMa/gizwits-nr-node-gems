@@ -11,7 +11,6 @@
     category: '机智云',
     color:"#C0DEED",
     defaults: {
-      server: {type: 'GizwitsServer',required:true},
       product: {value: '', required:true},
       productKey: {value: ''},
       device: {value: ''},
@@ -39,26 +38,20 @@
       // 封装请求方法
       const request = ({ url, method, data }) => {
         return new Promise(function(res, rej) {
-          const serverId = $('#node-input-server').val();
-          const gizwitsServer = JSON.parse(localStorage.getItem(`gizwitsServer-${serverId}`) || '{}');
-          if (gizwitsServer.aepUrl && gizwitsServer.aepToken) {
-            $.ajax({
-              url: `${gizwitsServer.aepUrl}${url}`,
-              contentType: "application/json;charset=utf-8",
-              type: method,
-              headers: {
-                Authorization: gizwitsServer.aepToken,
-              },
-              crossDomain: true,
-              dataType: 'json',
-              data,
-              success: function (data) {
-                res(data);
-              }
-            });
-          } else {
-            rej();
-          }
+          $.ajax({
+            url: `http://10.40.7.135:8111${url}`,
+            contentType: "application/json;charset=utf-8",
+            type: method,
+            headers: {
+              Authorization: 'ur5xTbc32EWF5Am0FM5qm41CPi6I5qVU',
+            },
+            crossDomain: true,
+            dataType: 'json',
+            data,
+            success: function (data) {
+              res(data);
+            }
+          });
         })
       }
       // 重置方法
@@ -142,15 +135,8 @@
         types:["str","num","bool"],
         typeField: "#node-input-dataPointValueType"
       });
-      // 监听服务变化，获取产品
-      $('#node-input-server').on('change', (e) => {
-        const serverId = e.target.value;
-        if (serverId !== '_ADD_') {
-          getProduct(this.product);
-        } else {
-          reset();
-        }
-      });
+      // 获取产品
+      getProduct(this.product);
       // 监听产品变化，获取设备及数据点
       $('#node-input-product').on('change', (e) => {
         let product = e.target.value || this.product;
@@ -184,10 +170,6 @@
 </script>
 
 <script type="text/html" data-template-name="设备状态获取">
-  <div class="form-row">
-    <label for="node-input-server"><i class="fa fa-user"></i> <span>机智云服务</span></label>
-    <input type="text" id="node-input-server">
-  </div>
   <div class="form-row">
     <label for="node-input-product"><i class="fa fa-search"></i> 选择产品</label>
     <select id="node-input-product" style="display: inline-block; width:70%;">
