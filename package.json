@@ -5,6 +5,7 @@
   "main": "index.js",
   "node-red": {
     "nodes": {
+      "camera status change": "lib/camera-status-change.js",
       "device status change": "lib/device-status-change.js",
       "device status get": "lib/device-status-get.js",
       "device control": "lib/device-control.js",

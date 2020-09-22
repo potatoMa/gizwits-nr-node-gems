@@ -1,0 +1,183 @@
+<script type="text/javascript">
+  var operators = [
+    {v:"eq",t:"=="},
+    {v:"neq",t:"!="},
+    {v:"lt",t:"<"},
+    {v:"lte",t:"<="},
+    {v:"gt",t:">"},
+    {v:"gte",t:">="},
+  ];
+  // 封装请求方法
+  window.request = ({ url, method, data }) => {
+    return new Promise(function(res, rej) {
+      $.ajax({
+        url: `http://10.40.7.135:8111${url}`,
+        contentType: "application/json;charset=utf-8",
+        type: method,
+        headers: {
+          Authorization: localStorage.getItem('access_token'),
+        },
+        crossDomain: true,
+        dataType: 'json',
+        data,
+        success: function (data) {
+          res(data);
+        }
+      });
+    })
+  }
+  RED.nodes.registerType('摄像头状态变化',{
+    category: '机智云',
+    color:"#C0DEED",
+    defaults: {
+      product: {value: '', required:true},
+      device: {value: ''},
+      condition: {value:'eq'},
+      dataPoint: {value: ''},
+      dataPointValue: {value: ''},
+      dataPointValueType: {value: 'str'},
+      deviceList: {value: ''},
+      dataPointList: {value: ''},
+    },
+    inputs: 0,
+    outputs: 1,
+    icon: "inject.png",
+    label: function() {
+      return '摄像头状态变化';
+    },
+    labelStyle: function () {
+      return '';
+    },
+    oneditresize: function() {
+      console.log('oneditresize')
+    },
+    oneditprepare: function() {
+      this.originalPk = this.product;
+      console.log(this.originalPk, 'originalPk')
+      // 重置方法
+      const reset = () => {
+        $('#node-input-device').empty();
+        $('#node-input-dataPoint').empty();
+      }
+      // 封装获取设备方法
+      const getDevice = (value) => {
+        request({
+          url: '/v1/monitorings/cameras',
+          method: 'get',
+          data: {
+            current: 0,
+            size: 100,
+          },
+        }).then((data) => {
+          if (data.data && data.data.content) {
+            // 渲染设备列表
+            const deviceSel = $('#node-input-device');
+            deviceSel.empty();
+            data.data.content.forEach((item) => {
+              deviceSel.append($(`<option value="${item.id}" pk="${item.productKey}">${item.name || item.id}</option>`));
+            });
+            deviceSel.val(value);
+            // 缓存起来
+            this.deviceList = data.data.content;
+          }
+        });
+      }
+      // 封装获取数据点方法
+      const getDataPoint = (productId, value) => {
+        request({
+          url: `/v1/products/${productId}/datapoints`,
+          method: 'get',
+        }).then((data) => {
+          if (data.data && data.data.meta) {
+            // 渲染设备列表
+            const dataPointSel = $('#node-input-dataPoint');
+            dataPointSel.empty();
+            data.data.meta.forEach((item) => {
+              dataPointSel.append($(`<option value="${item.name}">${item.display_name}</option>`));
+            });
+            dataPointSel.val(value);
+            // 缓存起来
+            this.dataPointList = data.data.meta;
+          }
+        });
+      }
+      // 渲染运算符
+      const conditionSel = $('#node-input-condition');
+      for (var d in operators) {
+        conditionSel.append($("<option></option>").val(operators[d].v).text(operators[d].t));
+        conditionSel.val(this.condition)
+      }
+      // 结果值
+      $("#node-input-dataPointValue").typedInput({
+        type:"str",
+        types:["str","num","bool"],
+        typeField: "#node-input-dataPointValueType"
+      });
+      // 获取设备
+      getDevice(this.device);
+      // 监听设备变化，获取数据点
+      $('#node-input-device').on('change', (e) => {
+        let device = e.target.value || this.device;
+        this.device = device;
+        const deviceItemSel = $('#node-input-device').children().filter(function(){ return $(this).val() === device})[0];
+        if (deviceItemSel && $(deviceItemSel).attr('pk')) {
+          this.product = $(deviceItemSel).attr('pk');
+        }
+        getDataPoint(this.product, this.dataPoint);
+      });
+      // 第一次进入时，加载缓存的列表
+      (this.deviceList || []).forEach((item) => {
+        $('#node-input-device').append($(`<option value="${item.id}">${item.name || item.id}</option>`));
+      });
+      $('#node-input-device').val(this.device)
+      (this.dataPointList || []).forEach((item) => {
+        $('#node-input-dataPoint').append($(`<option value="${item.name}">${item.display_name}</option>`));
+      });
+      $('#node-input-dataPoint').val(this.dataPoint)
+    },
+    oneditdelete: function() {
+      // 删除原来的队列
+      request({
+        url: `/v1/application/mq?queueName=${`gems.application.${this.originalPk}.nodered_` + this.id}`,
+        method: 'delete',
+      })
+    },
+    oneditsave: function() {
+      // 删除原来的队列
+      request({
+        url: `/v1/application/mq?queueName=${`gems.application.${this.originalPk}.nodered_` + this.id}`,
+        method: 'delete',
+      }).then(() => {
+        // 创建队列
+        request({
+          url: '/v1/application/mq',
+          method: 'post',
+          data: JSON.stringify({
+            productKey: this.product,
+            queueName: `gems.application.${this.product}.nodered_` + this.id
+          })
+        });
+      });
+      console.log('oneditsave')
+    },
+  });
+</script>
+
+<script type="text/html" data-template-name="摄像头状态变化">
+  <div class="form-row">
+    <label for="node-input-device"><i class="fa fa-rocket"></i> 选择设备</label>
+    <select id="node-input-device" style="display: inline-block; width:70%;">
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-dataPoint"><i class="fa fa-tags"></i> 数据点</label>
+    <select id="node-input-dataPoint" style="display: inline-block; width:70%;">
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-condition"><i class="fa fa-tags"></i> 判断条件</label>
+    <select style="display: inline-block;width:120px" id="node-input-condition"></select>
+    <input type="text" id="node-input-dataPointValue">
+    <input type="hidden" id="node-input-dataPointValueType">
+  </div>
+</script>
