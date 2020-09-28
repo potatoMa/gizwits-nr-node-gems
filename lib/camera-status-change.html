@@ -154,7 +154,8 @@
           method: 'post',
           data: JSON.stringify({
             productKey: this.product,
-            queueName: `gems.application.${this.product}.nodered_` + this.id
+            queueName: `gems.application.${this.product}.nodered_` + this.id,
+            mqType: 'NODE_RED',
           })
         });
       });

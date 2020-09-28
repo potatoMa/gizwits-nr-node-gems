@@ -184,7 +184,8 @@
             method: 'post',
             data: JSON.stringify({
               productKey: productIdSel,
-              queueName: `gems.application.${productIdSel}.nodered_` + this.id
+              queueName: `gems.application.${productIdSel}.nodered_` + this.id,
+              mqType: 'NODE_RED',
             })
           });
         });
