@@ -97,7 +97,7 @@
           method: 'get',
         }).then((data) => {
           if (data.data && data.data.meta) {
-            const dps = _this.productDataPoints = data.data.meta;
+            const dps = _this.productDataPoints = data.data.meta.filter(dp => dp.perm === 'W');
             // 渲染数据点列表
             const dataPointSels = $('.dataPoint');
             let index = 0;
@@ -124,8 +124,10 @@
       // 监听产品变化，获取设备及数据点
       $('#node-input-product').on('change', (e) => {
         let product = e.target.value || this.product;
-        getDevice(product, this.device);
-        getDataPoint(product);
+        if (product) {
+          getDevice(product, this.device);
+          getDataPoint(product);
+        }
       });
 
       // 渲染数据点配置

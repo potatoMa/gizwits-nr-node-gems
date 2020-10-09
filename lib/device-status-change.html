@@ -142,8 +142,10 @@
         $('#node-input-product').on('change', (e) => {
           let product = e.target.value || this.product;
           this.product = product;
-          getDevice(product, this.device);
-          getDataPoint(product, this.dataPoint);
+          if (product) {
+            getDevice(product, this.device);
+            getDataPoint(product, this.dataPoint);
+          }
         });
         // 第一次进入时，加载缓存的列表
         (this.productList || []).forEach((item) => {
