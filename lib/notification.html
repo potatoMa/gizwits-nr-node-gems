@@ -9,7 +9,7 @@
       phoneNum: {value: ''},
       listArgs: {value: ''},
       TXT_20: {value: ''},
-      TXT_32: {value: ''},
+      TXT_12: {value: ''},
     },
     inputs: 1,
     outputs: 1,
@@ -31,11 +31,11 @@
       $('#node-input-notiType').on('change', async (e) => {
         const notiType = e.target.value;
         if (notiType === 'phone') {
-          _this.content = '您的${TXT_20}在${TIME}发生了${TXT_32}报警，请及时处理';
+          _this.content = '您的${TXT_20}在${TIME}发生了${TXT_12}报警，请及时处理';
           $('#tips').html(_this.content);
           $('#params-box').empty();
           // 渲染参数输入框
-          const listArgs = ["TXT_20", "TIME", "TXT_32"]
+          const listArgs = ["TXT_20", "TIME", "TXT_12"]
           listArgs.forEach((item) => {
             if (item !== 'TIME') {
               $('#params-box').append($(`
