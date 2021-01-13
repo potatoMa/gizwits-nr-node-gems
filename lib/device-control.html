@@ -47,7 +47,7 @@
       // 封装获取产品方法
       const getProduct = (value) => {
         request({
-          url: '/v1/products',
+          url: '/api/v1/products',
           method: 'get',
         }).then((data) => {
           if (data.data) {
@@ -66,7 +66,7 @@
       // 封装获取设备方法
       const getDevice = (productId, value) => {
         request({
-          url: '/v1/devices',
+          url: '/api/v1/devices',
           method: 'get',
           data: {
             current: 0,
@@ -93,7 +93,7 @@
       // 封装获取数据点方法
       const getDataPoint = (productId) => {
         request({
-          url: `/v1/products/${productId}/datapoints`,
+          url: `/api/v1/products/${productId}/datapoints`,
           method: 'get',
         }).then((data) => {
           if (data.data && data.data.meta) {

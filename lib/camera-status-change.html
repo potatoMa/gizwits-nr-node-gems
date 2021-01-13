@@ -62,7 +62,7 @@
       // 封装获取设备方法
       const getDevice = (value) => {
         request({
-          url: '/v1/monitorings/cameras',
+          url: '/api/v1/monitorings/cameras',
           method: 'get',
           data: {
             current: 0,
@@ -85,7 +85,7 @@
       // 封装获取数据点方法
       const getDataPoint = (productId, value) => {
         request({
-          url: `/v1/products/${productId}/datapoints`,
+          url: `/api/v1/products/${productId}/datapoints`,
           method: 'get',
         }).then((data) => {
           if (data.data && data.data.meta) {
@@ -138,19 +138,19 @@
     oneditdelete: function() {
       // 删除原来的队列
       request({
-        url: `/v1/application/mq?queueName=${`gems.application.${this.originalPk}.nodered_` + this.id}`,
+        url: `/api/v1/application/mq?queueName=${`gems.application.${this.originalPk}.nodered_` + this.id}`,
         method: 'delete',
       })
     },
     oneditsave: function() {
       // 删除原来的队列
       request({
-        url: `/v1/application/mq?queueName=${`gems.application.${this.originalPk}.nodered_` + this.id}`,
+        url: `/api/v1/application/mq?queueName=${`gems.application.${this.originalPk}.nodered_` + this.id}`,
         method: 'delete',
       }).then(() => {
         // 创建队列
         request({
-          url: '/v1/application/mq',
+          url: '/api/v1/application/mq',
           method: 'post',
           data: JSON.stringify({
             productKey: this.product,

@@ -65,7 +65,7 @@
         // 封装获取产品方法
         const getProduct = (value) => {
           request({
-            url: '/v1/products',
+            url: '/api/v1/products',
             method: 'get',
           }).then((data) => {
             if (data.data) {
@@ -84,7 +84,7 @@
         // 封装获取设备方法
         const getDevice = (productId, value) => {
           request({
-            url: '/v1/devices',
+            url: '/api/v1/devices',
             method: 'get',
             data: {
               current: 0,
@@ -108,7 +108,7 @@
         // 封装获取数据点方法
         const getDataPoint = (productId, value) => {
           request({
-            url: `/v1/products/${productId}/datapoints`,
+            url: `/api/v1/products/${productId}/datapoints`,
             method: 'get',
           }).then((data) => {
             if (data.data && data.data.meta) {
@@ -164,7 +164,7 @@
       oneditdelete: function() {
         // 删除原来的队列
         request({
-          url: `/v1/application/mq?queueName=${`gems.application.${this.originalPk}.nodered_` + this.id}`,
+          url: `/api/v1/application/mq?queueName=${`gems.application.${this.originalPk}.nodered_` + this.id}`,
           method: 'delete',
         })
       },
@@ -177,12 +177,12 @@
         }
         // 删除原来的队列
         request({
-          url: `/v1/application/mq?queueName=${`gems.application.${this.originalPk}.nodered_` + this.id}`,
+          url: `/api/v1/application/mq?queueName=${`gems.application.${this.originalPk}.nodered_` + this.id}`,
           method: 'delete',
         }).then(() => {
           // 创建队列
           request({
-            url: '/v1/application/mq',
+            url: '/api/v1/application/mq',
             method: 'post',
             data: JSON.stringify({
               productKey: productIdSel,
