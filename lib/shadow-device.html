@@ -1,0 +1,109 @@
+<script type="text/javascript">
+  (function () {
+    RED.nodes.registerType('影子', {
+      category: '机智云',
+      defaults: {
+        name: { value: '' },
+        dataPoints: {value: ''},
+      },
+      inputs: 1,
+      outputs: 1,
+      color: '#C0DEED',
+      icon: 'light.png',
+      align: 'left',
+      label: function () {
+        return this.name || '影子';
+      },
+      labelStyle: function () {
+        return this.name ? 'node_label_italic' : '';
+      },
+      oneditprepare: function() {
+        this.dataPoints = this.dataPoints || [{}]
+        var _this = this;
+        $("ol.dpList").editableList({
+          addButton: "添加",
+          addItem: function(row, index, data) {
+            $(row).html(`
+              <input type="text" id="node-input-dataPoint${index}" class="dataPoint" style="display: inline-block;width: 120px" placeholder="数据点标识">
+              <input type="text" id="node-input-dataPointValue${index}" class="dataPointValue" style="display: inline-block; width:50%;">
+              <input type="hidden" id="node-input-dataPointValueType${index}" class="dataPointValueType">
+            `);
+            // 如果有传入data，则导入
+            $(`#node-input-dataPoint${index}`).val(data.dataPoint || '');
+            $(`#node-input-dataPointValue${index}`).val(data.dataPointValue || 'null');
+            $(`#node-input-dataPointValueType${index}`).val(data.dataPointValueType || 'str');
+            // 渲染数据点类型
+            $(`#node-input-dataPointValue${index}`).typedInput({
+              types:["str","num","bool"],
+              typeField: `#node-input-dataPointValueType${index}`
+            });
+            // 缓存起来
+            _this.dataPoints[index] = {
+              dataPoint: data.dataPoint || '',
+              dataPointValue: data.dataPointValue || 'null',
+              dataPointValueType: data.dataPointValueType || 'str',
+            };
+            // 绑定数据点类型切换事件，填入默认值
+            $(`#node-input-dataPointValue${index}`).on('change', function(e, type) {
+              const value = e.target.value;
+              const currentDataPoint = _this.dataPoints[index];
+              if (value !== currentDataPoint.dataPointValue) {
+                currentDataPoint.dataPointValue = value;
+              } else if (type !== currentDataPoint.dataPointValueType) {
+                let defaultValue = '';
+                switch(type) {
+                  case 'str':
+                    defaultValue = 'null';
+                    break;
+                  case 'num':
+                    defaultValue = '0';
+                    break;
+                  case 'bool':
+                    defaultValue = 'false';
+                    break;
+                }
+                currentDataPoint.dataPointValue = defaultValue;
+                currentDataPoint.dataPointValueType = type;
+                $(`#node-input-dataPointValue${index}`).typedInput('value', defaultValue);
+              }
+            })
+          },
+          removable: true,
+        });
+        this.dataPoints.forEach((item) => {
+          $("ol.dpList").editableList('addItem', item);
+        });
+      },
+      oneditsave: function() {
+        // 找出对应产品id的pk
+        const productIdSel = this.product;
+        const pkItemSel = $('#node-input-product').children().filter(function(){ return $(this).val() === productIdSel})[0];
+        if (pkItemSel) {
+          this.productKey = $(pkItemSel).attr('pk');
+        }
+        console.log('oneditsave')
+        var dpItems = $("ol.dpList").editableList('items');
+        this.dataPoints = [];
+        for (var item of dpItems) {
+          this.dataPoints.push({
+            dataPoint: item.children('.dataPoint').val(),
+            dataPointValue: item.children('.dataPointValue').val(),
+            dataPointValueType: item.children('.dataPointValueType').val(),
+          })
+        }
+      },
+    });
+  })();
+</script>
+
+<script type="text/html" data-template-name="影子">
+  <div class="form-row">
+    <label for="node-input-dataPointValue"><i class="fa fa-tags"></i> 数据点</label>
+    <ol class="dpList"></ol>
+  </div>
+  <br/>
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> 节点名称</label>
+    <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+</script>

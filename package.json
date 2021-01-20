@@ -10,6 +10,7 @@
       "device status get": "lib/device-status-get.js",
       "device control": "lib/device-control.js",
       "notification": "lib/notification.js",
+      "custom device": "lib/shadow-device.js",
       "gizwitsServer": "lib/gizwits-server.js"
     }
   },
