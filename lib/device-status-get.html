@@ -21,6 +21,7 @@
       productList: {value: ''},
       deviceList: {value: ''},
       dataPointList: {value: ''},
+      shadowDeviceNode: {value: ''},
     },
     inputs: 1,
     outputs: 1,
@@ -54,6 +55,22 @@
           });
         })
       }
+      // 封装获取影子产品方法
+      const getShadowDevice = async () => {
+        const data = await request({
+          url: '/flows',
+          method: 'get',
+        });
+        let shadowDeviceNode = [];
+        if (data && data.length > 0) {
+          data.forEach((item) => {
+            if (item.z === this.z && item.type === '影子') {
+              shadowDeviceNode.push(item);
+            }
+          })
+        }
+        return shadowDeviceNode;
+      }
       // 重置方法
       const reset = () => {
         $('#node-input-product').empty();
@@ -65,7 +82,7 @@
         request({
           url: '/api/v1/products',
           method: 'get',
-        }).then((data) => {
+        }).then(async (data) => {
           if (data.data) {
             // 渲染产品列表
             const productSel = $('#node-input-product');
@@ -73,6 +90,11 @@
             data.data.forEach((item) => {
               productSel.append($('<option></option>').val(item.key).text(item.name || item.key).attr('pk', item.key));
             });
+            const shadowDeviceNode = await getShadowDevice();
+            if (shadowDeviceNode && shadowDeviceNode.length > 0) {
+              productSel.append($('<option></option>').val('shadowDevice').text('影子服务').attr('pk', 'shadowDevice'));
+              this.shadowDeviceNode = shadowDeviceNode;
+            }
             productSel.val(value);
             // 缓存起来
             this.productList = data.data;
@@ -81,6 +103,23 @@
       }
       // 封装获取设备方法
       const getDevice = (productId, value) => {
+        if (productId === 'shadowDevice') {
+          const deviceSel = $('#node-input-device');
+          if (this.shadowDeviceNode && this.shadowDeviceNode.length > 0) {
+            // 渲染设备列表
+            deviceSel.empty();
+            this.shadowDeviceNode.forEach((item) => {
+              deviceSel.append($(`<option value="${item.id}">${item.name}</option>`));
+            });
+            deviceSel.val(value);
+            // 缓存起来
+            this.deviceList = this.shadowDeviceNode;
+          } else {
+            deviceSel.empty();
+            deviceSel.val('');
+          }
+          return;
+        }
         request({
           url: '/api/v1/devices',
           method: 'get',
@@ -105,6 +144,24 @@
       }
       // 封装获取数据点方法
       const getDataPoint = (productId, value) => {
+        if (productId === 'shadowDevice') {
+          if (this.shadowDeviceNode && this.shadowDeviceNode.length > 0) {
+            const currrentShadowDeviceNode = this.shadowDeviceNode.find(item => item.id === $('#node-input-device').val());
+            const dataPointSel = $('#node-input-dataPoint');
+            if (currrentShadowDeviceNode) {
+              const dps = this.productDataPoints = currrentShadowDeviceNode.dataPoints;
+              // 渲染数据点列表
+              $(dataPointSel).empty();
+              dps.forEach((item) => {
+                $(dataPointSel).append($(`<option value="${item.dataPoint}">${item.dataPoint}</option>`));
+              });
+              dataPointSel.val(value);
+            } else {
+              dataPointSel.val('');
+            }
+          }
+          return;
+        }
         request({
           url: `/api/v1/products/${productId}/datapoints`,
           method: 'get',
@@ -143,6 +200,13 @@
         if (product) {
           getDevice(product, this.device);
           getDataPoint(product, this.dataPoint);
+        }
+      });
+      // 监听设备变化，如果为影子设备则获取数据点
+      $('#node-input-device').on('change', (e) => {
+        const product = $('#node-input-product').val();
+        if (product === 'shadowDevice') {
+          getDataPoint(product);
         }
       });
       // 第一次进入时，加载缓存的列表

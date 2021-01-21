@@ -27,10 +27,10 @@
       this.dataPoints = this.dataPoints || [{}]
       var _this = this;
       // 封装请求方法
-      const request = ({ test, url, method, data }) => {
+      const request = ({ url, method, data }) => {
         return new Promise(function(res, rej) {
           $.ajax({
-            url: `${test ? window.location.origin : 'http://10.40.7.106'}${url}`,
+            url: `${window.location.origin}${url}`,
             contentType: "application/json;charset=utf-8",
             type: method,
             headers: {
@@ -50,7 +50,6 @@
         const data = await request({
           url: '/flows',
           method: 'get',
-          test: true,
         });
         let shadowDeviceNode = [];
         if (data && data.length > 0) {
@@ -80,7 +79,6 @@
               productSel.append($('<option></option>').val('shadowDevice').text('影子服务').attr('pk', 'shadowDevice'));
               this.shadowDeviceNode = shadowDeviceNode;
             }
-            console.log(shadowDeviceNode, 'shadowDeviceNodeshadowDeviceNode')
             productSel.val(value);
             // 缓存起来
             this.productList = data.data;
@@ -89,7 +87,6 @@
       }
       // 封装获取设备方法
       const getDevice = (productId, value) => {
-        console.log(productId, value, this.shadowDeviceNode, 'productIdproductIdproductIdproductId');
         if (productId === 'shadowDevice') {
           const deviceSel = $('#node-input-device');
           if (this.shadowDeviceNode && this.shadowDeviceNode.length > 0) {
@@ -137,20 +134,23 @@
         if (productId === 'shadowDevice') {
           if (this.shadowDeviceNode && this.shadowDeviceNode.length > 0) {
             const currrentShadowDeviceNode = this.shadowDeviceNode.find(item => item.id === $('#node-input-device').val());
-            if (currrentShadowDeviceNode) {
-              const dps = _this.productDataPoints = currrentShadowDeviceNode.dataPoints;
-              // 渲染数据点列表
-              const dataPointSels = $('.dataPoint');
-              let index = 0;
-              for (var dataPointSel of dataPointSels) {
-                $(dataPointSel).empty();
+            const dataPointSels = $('.dataPoint');
+            let index = 0;
+            for (var dataPointSel of dataPointSels) {
+              $(dataPointSel).empty();
+              if (currrentShadowDeviceNode) {
+                const dps = _this.productDataPoints = currrentShadowDeviceNode.dataPoints;
+                // 渲染数据点列表
                 dps.forEach((item) => {
                   $(dataPointSel).append($(`<option value="${item.dataPoint}">${item.dataPoint}</option>`));
-                  $(dataPointSel).val((_this.dataPoints[index] && _this.dataPoints[index].dataPoint) || dps[0].name);
                 });
+                $(dataPointSel).val((_this.dataPoints[index] && _this.dataPoints[index].dataPoint) || dps[0].name);
                 index += 1;
+              } else {
+                $(dataPointSel).val('');
               }
             }
+            
           }
           return;
         }
