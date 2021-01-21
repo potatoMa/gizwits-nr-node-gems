@@ -48,7 +48,7 @@
       // 封装获取影子产品方法
       const getShadowDevice = async () => {
         const data = await request({
-          url: '/flows',
+          url: '/ruleEngine/flows',
           method: 'get',
         });
         let shadowDeviceNode = [];
