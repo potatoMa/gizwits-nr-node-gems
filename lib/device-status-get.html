@@ -38,9 +38,14 @@
     oneditprepare: function() {
       // 封装请求方法
       const request = ({ url, method, data }) => {
+        let basename = '';
+        const pathArr = window.location.pathname.split('/');
+        if (pathArr.length === 4) {
+          basename = pathArr[1];
+        }
         return new Promise(function(res, rej) {
           $.ajax({
-            url: `${window.location.origin}${url}`,
+            url: `${window.location.origin}${basename ? `/${basename}/` : ''}${url}`,
             contentType: "application/json;charset=utf-8",
             type: method,
             headers: {

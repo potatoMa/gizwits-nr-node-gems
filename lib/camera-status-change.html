@@ -10,8 +10,13 @@
   // 封装请求方法
   window.request = ({ url, method, data }) => {
     return new Promise(function(res, rej) {
+      let basename = '';
+      const pathArr = window.location.pathname.split('/');
+      if (pathArr.length === 4) {
+        basename = pathArr[1];
+      }
       $.ajax({
-        url: `${window.location.origin}${url}`,
+        url: `${window.location.origin}${basename ? `/${basename}/` : ''}${url}`,
         contentType: "application/json;charset=utf-8",
         type: method,
         headers: {
